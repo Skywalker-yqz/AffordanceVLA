@@ -1,0 +1,144 @@
+# ──────────────────────────────────────────────────────────────
+# AffordanceVLA — Stage III Libero Fine-tune Config
+# Hardware: 8× H200 (141 GB/card)
+#
+# Train all three experts + all decoders on robot data
+# → action + Which2Act + Where2Act + How2Act
+#
+# Launch:
+#   torchrun --nproc_per_node=8 -m src.train --config "configs/stage3 Libero.yaml"
+#
+# Effective batch size: 8 × 8 = 64 per step
+# Estimated GPU memory: ~60-80 GB/card (bf16)
+# ──────────────────────────────────────────────────────────────
+
+# Full data load (a1 all tasks, libero all suites, calvin train+val).
+# Omit or set to "debug" for minimal data (1 task/suite per dataset).
+mode: train
+
+model:
+  # ── Pretrained Weights ──
+  pretrained_path: /mnt/data/pretrained_models/pi0_base
+  load_ckpt: null
+  # TODO: set to Stage I checkpoint path
+  language_tokenizer_path: /mnt/data/pretrained_models/paligemma-3b-pt-224
+
+  # ── Which2Act Backend Switch ──
+  # false = VQ-VAE (discrete CE), true = Flux VAE (continuous SmoothL1)
+  which2act_use_flux_vae: true
+  which2act_flux_vae_path: /mnt/data/pretrained_models/flux_vae
+  which2act_vae_ckpt: /mnt/data/pretrained_models/vae_ch160v4096z32.pth
+
+  # ── Architecture ──
+  chunk_size: 6
+  max_action_dim: 32
+  max_state_dim: 32
+  num_steps: 10
+  attention_implementation: eager
+  resize_imgs_with_padding: "(224, 224)"
+
+  # ── Affordance Queries ──
+  which2act_num_tokens: 16
+  where2act_num_tokens: 16
+  how2act_num_tokens: 32
+  query_init_std: 0.02
+
+  # ── Which2Act Decoder (VQ-VAE params, used when which2act_use_flux_vae=false) ──
+  which2act_vae_vocab_size: 4096
+  which2act_vae_z_channels: 32
+  which2act_vae_ch: 160
+  which2act_vae_share_quant_resi: 4
+  which2act_target_image_size: 256
+  which2act_concat_wrist: false
+  which2act_loss_weight: 0.0441
+  control_contextexpandedcropping: true
+  which2act_bbox_expand_ratio: 1.5
+  which2act_label_smoothing: 0.1
+  control_wristtoken: true
+
+  # ── Where2Act Decoder ──
+  where2act_heatmap_h: 24
+  where2act_heatmap_w: 24
+  where2act_decoder_layers: 4
+  where2act_decoder_heads: 8
+  where2act_decoder_dim: 256
+  where2act_loss_weight: 0.0441
+
+  # ── How2Act Decoder ──
+  how2act_shape_num_tokens: 30
+  how2act_layout_num_tokens: 2
+  how2act_shape_denoiser_dim: 512
+  how2act_shape_denoiser_depth: 3
+  how2act_shape_denoiser_heads: 8
+  how2act_shape_denoiser_patch_size: 4
+  how2act_shape_diffusion_timesteps: 1000
+  how2act_shape_loss_weight: 0.0441
+  how2act_layout_loss_weight: 0.0176
+
+# ── Data ──
+data:
+  chunk_size: 6
+  control_frame: true
+  frame_num: 20
+  control_speed: true
+  pos_limit: 0.04
+  ori_limit: 0.1
+  weights:
+    a1: 0
+    libero: 1
+    calvin_training: 0
+    calvin_validation: 0
+  datasets:
+    - type: a1
+      preprocessed_root: /mnt/users/AffordanceVLA/data/preprocessed/InternData-A1/sim
+      raw_root: /mnt/users/AffordanceVLA/data/InternData-A1/sim
+      frames_root: /mnt/nas/InternData-A1_frames/sim
+      debug_task: pick_and_place_tasks/franka/continues_pick_and_place_part1
+
+    - type: libero
+      preprocessed_dir: /mnt/users/AffordanceVLA/data/preprocessed/LIBERO-datasets
+      raw_dir: /mnt/data/LIBERO-datasets
+      keyframe_results_dir: /mnt/users/AffordanceVLA/data/preprocessed/LIBERO-datasets/keyframe_results
+      debug_suite: libero_spatial
+      filter_noops: true
+
+    - type: calvin
+      preprocessed_dir: /mnt/users/AffordanceVLA/data/preprocessed/CALVIN
+      raw_dir: /mnt/data/CALVIN
+      keyframe_results_dir: /mnt/users/AffordanceVLA/data/preprocessed/CALVIN/keyframe_results
+      debug_split: training
+
+# ── Training ──
+training:
+  stage: stage2
+  output_dir: outputs/stage2_prod_fixed
+
+  batch_size: 32
+  max_steps: null
+  num_workers: 8
+
+  learning_rate: 5.0e-5
+  vision_encoder_lr: 2.5e-5
+  und_expert_lr: 5.0e-5
+  gen_expert_lr: 5.0e-5
+  act_expert_lr: 5.0e-5
+
+  weight_decay: 1.0e-4
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_eps: 1.0e-8
+  max_grad_norm: 1.0
+  warmup_steps: 2000
+
+  log_every: 50
+  save_every: 10000
+
+  bf16: false
+  resume_from_checkpoint: null
+  seed: 233
+  log_level: INFO
+
+  wandb_enabled: true
+  wandb_project: AffordanceVLA
+  wandb_run_name: stage2_prod_fixed
+  wandb_tags: [stage2, production, 4xH200]

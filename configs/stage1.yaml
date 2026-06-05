@@ -1,0 +1,150 @@
+# ──────────────────────────────────────────────────────────────
+# AffordanceVLA — Stage I Production Config
+# Hardware: 32× H200 (141 GB/card)
+#
+# Freeze Understanding + Action Expert, train Generation Expert
+# → Which2Act + Where2Act
+#
+# Launch:
+#   torchrun --nproc_per_node=8 -m src.train --config configs/stage1.yaml
+#
+# Effective batch size: 1024
+# Estimated GPU memory: ~40-50 GB/card (bf16)
+# ──────────────────────────────────────────────────────────────
+
+model:
+  # ── Pretrained Weights ──
+  pretrained_path: /mnt/data/pretrained_models/pi0_base
+  load_ckpt: null
+  language_tokenizer_path: /mnt/data/pretrained_models/paligemma-3b-pt-224
+
+  # ── Which2Act Backend Switch ──
+  # false = VQ-VAE (discrete CE), true = Flux VAE (continuous SmoothL1)
+  which2act_use_flux_vae: true
+  which2act_flux_vae_path: /mnt/data/pretrained_models/flux_vae
+  which2act_vae_ckpt: /mnt/data/pretrained_models/vae_ch160v4096z32.pth
+
+  # ── Architecture ──
+  chunk_size: 50
+  max_action_dim: 32
+  max_state_dim: 32
+  num_steps: 10
+  attention_implementation: eager
+  resize_imgs_with_padding: "(224, 224)"
+
+  # ── Affordance Queries ──
+  which2act_num_tokens: 16
+  where2act_num_tokens: 16
+  how2act_num_tokens: 32
+  query_init_std: 0.02
+
+  # ── Which2Act Decoder (VQ-VAE params, used when which2act_use_flux_vae=false) ──
+  which2act_vae_vocab_size: 4096
+  which2act_vae_z_channels: 32
+  which2act_vae_ch: 160
+  which2act_vae_share_quant_resi: 4
+  which2act_target_image_size: 256       # only used when control_contextexpandedcropping=false
+  which2act_concat_wrist: false
+  which2act_loss_weight: 0.1
+  control_contextexpandedcropping: true  # expand bbox by ratio → square → resize to 256
+  which2act_bbox_expand_ratio: 1.5
+  which2act_label_smoothing: 0.1         # VQ-VAE mode only
+  control_wristtoken: true               # adds wrist token group (not trained in Stage I: no wrist data)
+
+  # ── Where2Act Decoder ──
+  where2act_heatmap_h: 24
+  where2act_heatmap_w: 24
+  where2act_decoder_layers: 4
+  where2act_decoder_heads: 8
+  where2act_decoder_dim: 256
+  where2act_loss_weight: 0.1
+
+  # ── How2Act Decoder (frozen in Stage I) ──
+  how2act_shape_num_tokens: 30
+  how2act_layout_num_tokens: 2
+  how2act_shape_denoiser_dim: 512
+  how2act_shape_denoiser_depth: 3
+  how2act_shape_denoiser_heads: 8
+  how2act_shape_denoiser_patch_size: 4
+  how2act_shape_diffusion_timesteps: 1000
+  how2act_shape_loss_weight: 0.1
+  how2act_layout_loss_weight: 0.04
+
+# ── Data ──
+data:
+  chunk_size: 50
+  weights:
+    prism: 
+    agd20k: 
+    refspatial: 
+    vqa: 
+  batch_sizes:
+    prism: 96
+    agd20k: 24
+    refspatial: 96
+    vqa: 96
+  dataset_target_h: 480
+  dataset_target_w: 640
+  
+  datasets:
+    - type: prism
+      path: /mnt/users/AffordanceVLA/data/PRISM/processed/test
+      min_bbox_ratio: 0.02        # filter bbox_area/image_area < 1%
+
+    - type: agd20k
+      path: /mnt/users/AffordanceVLA/data/AGD20K/raw/AGD20K/AGD20K/Seen/testset
+      target_size: [480, 640]
+      # no min_bbox_ratio: AGD20K targets are large (min=0.012), keep all
+
+    - type: refspatial
+      data_dir: /mnt/data/RefSpatial/2D/processed_with_sam
+      image_dir: /mnt/data/RefSpatial/2D/image
+      target_size: [480, 640]
+      min_bbox_ratio: 0.05        # filter bbox_area/image_area < 5%
+
+    - type: vqa
+      path: /mnt/users/AffordanceVLA/data/VQA/2025/processed
+      min_bbox_ratio: 0.03
+
+# ── Training ──
+training:
+  stage: stage1
+  output_dir: outputs/stage1_prod
+
+  # ── Batch & Steps ──
+  # Per-GPU: PRISM/RefSpatial=128, AGD20K=32 (per batch_sizes above)
+  # 8 GPUs → effective bs up to 1024 per step
+  batch_size: 96
+  max_steps: 
+  num_workers: 8
+
+  # ── Learning Rates (frozen groups = 0) ──
+  learning_rate: 5.0e-5
+  vision_encoder_lr: 0.0            # frozen
+  und_expert_lr: 0.0                 # frozen
+  gen_expert_lr: 5.0e-5              # Generation Expert + Queries + Decoders
+  act_expert_lr: 0.0                 # frozen
+
+  # ── Optimizer ──
+  weight_decay: 1.0e-4
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_eps: 1.0e-8
+  max_grad_norm: 1.0
+  warmup_steps: 2000
+
+  # ── Logging & Saving ──
+  log_every: 50
+  save_every: 10000
+
+  # ── Hardware ──
+  bf16: false                         # ESSENTIAL for H200
+  resume_from_checkpoint: null
+  seed: 233
+  log_level: INFO
+
+  # ── W&B ──
+  wandb_enabled: true
+  wandb_project: AffordanceVLA
+  wandb_run_name: stage1_prod
+  wandb_tags: [stage1, production, 32xH200] # 8xH200
