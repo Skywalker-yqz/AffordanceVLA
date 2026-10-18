@@ -1,0 +1,110 @@
+[
+  {
+    "file": "LeRobot-Apache-2.0.txt",
+    "upstream": "https://github.com/huggingface/lerobot/blob/b883328e6c95681ca90a18b102e4ae5e1f91e2bf/LICENSE",
+    "sha256": "0583375a0ec642ec79c447781f34322b0cfa66baff31258214d040f1f6d86d7c",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "openpi-Apache-2.0.txt",
+    "upstream": "https://github.com/Physical-Intelligence/openpi/blob/215abfb217dbac7d5f1273282331b9b1866c0479/LICENSE",
+    "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "SAM3D-SAM-License.txt",
+    "upstream": "https://github.com/facebookresearch/sam-3d-objects/blob/f91db411c50efee93d8db7aeb323885650f6f722/LICENSE",
+    "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "Rex-Omni-IDEA-1.0.txt",
+    "upstream": "https://github.com/IDEA-Research/Rex-Omni/blob/ee58b1e887f94da49d0749945388defede6b52e6/LICENSE",
+    "sha256": "5249a075efeaf24ad885ce64cc4fd32d9e9c9023e8fa06f94767237d1ac4247f",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "SAM-Apache-2.0.txt",
+    "upstream": "https://github.com/facebookresearch/segment-anything/blob/dca509fe793f601edb92606367a655c15ac00fdf/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "Qwen3-VL-Apache-2.0.txt",
+    "upstream": "https://github.com/QwenLM/Qwen3-VL/blob/96588727e44c78b25ba03ea03b8e12f7e64fd0da/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "LIBERO-MIT.txt",
+    "upstream": "https://github.com/Lifelong-Robot-Learning/LIBERO/blob/8f1084e3132a39270c3a13ebe37270a43ece2a01/LICENSE",
+    "sha256": "e2885fd30a08381b799c4a33385522b23d637b4051b8f9a7f9f2519944b68ff6",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "CALVIN-MIT.txt",
+    "upstream": "https://github.com/mees/calvin/blob/fa03f01f19c65920e18cf37398a9ce859274af76/LICENSE",
+    "sha256": "526460b2b673b436f6486f4540a1dc51189d18814d456e107d6d03d656c5ef38",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "OpenVLA-MIT.txt",
+    "upstream": "https://github.com/openvla/openvla/blob/c8f03f48af692657d3060c19588038c7220e9af9/LICENSE",
+    "sha256": "c4ee2ba5958af03d74b1d3dfa174e3749171d689fb4c23cc170749c05ae3eeb5",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "RoboCasa-MIT.txt",
+    "upstream": "https://github.com/robocasa/robocasa/blob/a9e152e2eea16d342dac40e4577fb4c68b932854/LICENSE",
+    "sha256": "5da18670b3f00c59847b1ded9c28dee59940d963b1e03b528b0108d9c5a09885",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "RoboTwin-MIT.txt",
+    "upstream": "https://github.com/RoboTwin-Platform/RoboTwin/blob/ea8b21121ebb3cd201ff5b3fe361944ac94eda3f/LICENSE",
+    "sha256": "c695d421718e54e6f3a60858f0c601125c3ecc60c199332c15947360561e2a9f",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "frankapy-MIT.txt",
+    "upstream": "https://github.com/iamlab-cmu/frankapy/blob/4ba2872ddfa460fd40efd372f72b6c0258e31abb/LICENSE",
+    "sha256": "6d763cfb838218dbd37c4bd83b9e5d1b0741605d8c666ee8e44c1506d82f8682",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "FLUX-Apache-2.0.txt",
+    "upstream": "https://github.com/black-forest-labs/flux/blob/802fb4713906133fcbd0d8dc5351620ca4773036/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "FLUX1-dev-Non-Commercial.txt",
+    "upstream": "https://github.com/black-forest-labs/flux/blob/802fb4713906133fcbd0d8dc5351620ca4773036/model_licenses/LICENSE-FLUX1-dev",
+    "sha256": "6f7b3d94ddd94380a4dc2d1211ed57883d320dea96f4393b34d4a454041029e1",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "VAR-MIT.txt",
+    "upstream": "https://github.com/FoundationVision/VAR/blob/78b95394fc5896192e3a003e4b295f8ea743c48f/LICENSE",
+    "sha256": "a318f4da9d043e05f535b65774febde7572908c97562cc14e49a2f3687f5a453",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "taming-transformers-MIT.txt",
+    "upstream": "https://github.com/CompVis/taming-transformers/blob/3ba01b241669f5ade541ce990f7650a3b8f65318/License.txt",
+    "sha256": "f6216cce912c447025b8aacfa9ac09634c43815cd8d87762528300e5ddf6b959",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "stable-diffusion-OpenRAIL-M.txt",
+    "upstream": "https://github.com/CompVis/stable-diffusion/blob/21f890f9da3cfbeaba8e2ac3c425ee9e998d5229/LICENSE",
+    "sha256": "be351ebe7ac01bcdbb018639aadcfd38f136b7dc3f2a3d4d3a24db51d1b210ef",
+    "retrieved": "2026-10-18"
+  },
+  {
+    "file": "Qwen2.5-VL-3B-Research.txt",
+    "upstream": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE",
+    "sha256": "b5c0e5cf74cf51af1ecbc4af597cfcd13fd9925611838884a681070838a14a50",
+    "retrieved": "2026-10-18"
+  }
+]

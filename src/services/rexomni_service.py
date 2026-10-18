@@ -1,3 +1,9 @@
+# Box/mask helper portions adapted from IDEA-Research/Rex-Omni's SAM demo.
+# Copyright (c) IDEA. All Rights Reserved.
+# These portions retain IDEA License 1.0 (non-commercial research purposes).
+# See licenses/Rex-Omni-IDEA-1.0.txt and THIRD_PARTY_NOTICES.md.
+# Modified for AffordanceVLA service inputs, outputs, and validation.
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 

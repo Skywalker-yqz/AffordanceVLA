@@ -322,4 +322,8 @@ The LIBERO evaluation setup follows [openvla/openvla](https://github.com/openvla
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Original AffordanceVLA contributions are released under the [MIT License](LICENSE).
+Third-party code, software dependencies, pretrained models, and datasets retain
+their respective licenses and terms. See [Third-party notices](THIRD_PARTY_NOTICES.md)
+for attribution and component-specific terms, and the
+[Python dependency license inventory](licenses/PYTHON_DEPENDENCIES.md) for declared packages.

@@ -1,3 +1,8 @@
+# Portions adapted from FoundationVision/VAR and the CompVis sources cited below.
+# Copyright (c) 2024 FoundationVision. VAR portions: MIT.
+# Modified for AffordanceVLA; see THIRD_PARTY_NOTICES.md and licenses/ for
+# the original copyright notices and the terms applicable to each source.
+
 """
 Complete VQ-VAE model combining Encoder, Decoder, and multi-scale VectorQuantizer.
 

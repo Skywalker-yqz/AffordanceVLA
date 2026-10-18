@@ -1,3 +1,9 @@
+# Portions adapted from Hugging Face LeRobot's PaliGemma expert implementation.
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
+# Licensed under the Apache License, Version 2.0. See
+# licenses/LeRobot-Apache-2.0.txt and THIRD_PARTY_NOTICES.md.
+# Modified for AffordanceVLA; upstream portions retain their original license.
+
 """
 Mixture-of-Transformer (MoT) backbone for AffordanceVLA.
 

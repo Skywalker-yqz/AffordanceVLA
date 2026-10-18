@@ -1,3 +1,9 @@
+# Pipeline portions adapted from facebookresearch/sam-3d-objects.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# These portions and their modifications are distributed under the SAM License,
+# not the repository's MIT license. See licenses/SAM3D-SAM-License.txt
+# and THIRD_PARTY_NOTICES.md. Modified for AffordanceVLA service modes.
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 

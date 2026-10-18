@@ -1,3 +1,9 @@
+# Image helpers adapted from LeRobot and Physical Intelligence openpi.
+# LeRobot: Copyright 2025 Physical Intelligence and The HuggingFace Inc. team. All rights reserved.
+# Apache License, Version 2.0; see licenses/LeRobot-Apache-2.0.txt,
+# licenses/openpi-Apache-2.0.txt, and THIRD_PARTY_NOTICES.md.
+# Modified for AffordanceVLA; upstream portions retain their original license.
+
 """
 Image utility functions for AffordanceVLA.
 

@@ -1,3 +1,11 @@
+# Attention/padding portions adapted from LeRobot's pi0 implementation.
+# Copyright 2025 Physical Intelligence and The HuggingFace Inc. team. All rights reserved.
+# Licensed under the Apache License, Version 2.0. See
+# licenses/LeRobot-Apache-2.0.txt and THIRD_PARTY_NOTICES.md.
+# Modified for AffordanceVLA; upstream portions retain their original license.
+# Top-k/top-p sampler adapted from FoundationVision/VAR models/helpers.py.
+# Copyright (c) 2024 FoundationVision. MIT; see licenses/VAR-MIT.txt.
+
 """
 Core utility functions for AffordanceVLA model.
 

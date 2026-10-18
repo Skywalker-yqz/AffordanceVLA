@@ -1,3 +1,8 @@
+# Portions adapted from FoundationVision/VAR and the CompVis sources cited below.
+# Copyright (c) 2024 FoundationVision. VAR portions: MIT.
+# Modified for AffordanceVLA; see THIRD_PARTY_NOTICES.md and licenses/ for
+# the original copyright notices and the terms applicable to each source.
+
 """
 Multi-scale Vector Quantizer for VQ-VAE (VAR framework).
 
