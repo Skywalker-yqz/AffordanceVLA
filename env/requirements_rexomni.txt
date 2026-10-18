@@ -45,7 +45,6 @@ fastar==0.8.0
 fastrlock==0.8.3
 ffmpy==1.0.0
 filelock==3.20.2
-flash_attn @ file:///mnt/oss/Downloads/flash_attn-2.7.4.post1%2Bcu12torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl#sha256=f09928f2c7e4dfbe6efca5a997862898495263c87afe662c18fb1936eb192eab
 Flask==3.1.2
 fonttools==4.61.0
 frozenlist==1.8.0

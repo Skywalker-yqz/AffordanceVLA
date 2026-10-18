@@ -11,7 +11,7 @@ This module only defines the I/O wrapper. The LLM client itself lives in a
 separate module — set ``LLM_CLIENT_MODULE`` below to its import path. The
 client must expose a callable ``call(system_prompt, user_prompt) -> str``.
 
-Prompt templates are intentionally left empty here: fill in
+Configure the dataset-specific prompt through
 ``SYSTEM_PROMPT`` and ``USER_PROMPT_TEMPLATE`` before running.
 """
 

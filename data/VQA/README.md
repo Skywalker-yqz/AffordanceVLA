@@ -1,9 +1,5 @@
-# Special Recipe
+# Grounding and Pointing Data
 
-The grounding and pointing data in this collection is assembled through a special recipe that combines two complementary sources:
+Stage I uses 8.8M curated grounding and pointing samples from the source pools in Table 1 of the paper. Native spatial annotations are normalized into shared Which2Act and Where2Act targets, with aligned SAM-3D shape and layout supervision.
 
-1. **Rex-Omni open-source subset** — a subset of the Rex-Omni training corpus, namely the full collection of publicly available datasets released under non-commercial licenses. See the Rex-Omni project page for the detailed data composition: https://rex-omni.github.io/
-
-2. **Knowin AI proprietary data** — specialized in-house commercial data drawn from Knowin AI's business operations.
-
-In total, this collection comprises approximately **18,000,000** entries.
+Dataset adapters follow the `AffordanceSample` interface in `src/datasets/base_dataset.py`.

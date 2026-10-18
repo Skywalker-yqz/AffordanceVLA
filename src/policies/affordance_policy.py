@@ -59,7 +59,7 @@ class AffordanceVLAPolicy(nn.Module):
 
     Includes Which2Act decoder for supervising Which2Act tokens via either
     VQ-VAE discrete token prediction or Flux VAE continuous latent regression,
-    and optionally a Wrist decoder (same architecture) for the wrist token group.
+    and optionally a Wrist decoder (shared projection weights) for the wrist token group.
 
     Attributes:
         config: AffordanceVLAConfig instance.
@@ -95,6 +95,7 @@ class AffordanceVLAPolicy(nn.Module):
                     self.wrist_decoder = Which2ActFluxDecoder(
                         config, flux_vae, is_wrist_mode=True
                     )
+                    self.wrist_decoder.proj_head = self.which2act_decoder.proj_head
                 else:
                     self.wrist_decoder = None
             else:
@@ -114,6 +115,7 @@ class AffordanceVLAPolicy(nn.Module):
                     self.wrist_decoder = Which2ActDecoder(
                         config, vqvae, is_wrist_mode=True
                     )
+                    self.wrist_decoder.cls_head = self.which2act_decoder.cls_head
                 else:
                     self.wrist_decoder = None
             else:

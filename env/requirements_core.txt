@@ -1,0 +1,15 @@
+# Core training and inference dependencies; install PyTorch first.
+numpy==1.26.4
+transformers==4.49.0
+diffusers==0.31.0
+huggingface-hub==0.29.3
+safetensors==0.5.3
+omegaconf==2.3.0
+einops==0.8.1
+Pillow==11.1.0
+scipy==1.15.2
+sentencepiece==0.2.0
+protobuf==5.29.3
+packaging==24.2
+tqdm==4.67.1
+requests==2.32.3

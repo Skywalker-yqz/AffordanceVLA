@@ -374,11 +374,10 @@ class Which2ActFluxDecoder(nn.Module):
     supervised with MSE or Smooth-L1 loss (set by WHICH2ACT_FLUX_LOSS_TYPE).
 
     Spatial mapping:
-      - 16 Which2Act tokens form a 4×4 grid.
+      - Which2Act tokens form a square grid (4×4 for fast, 8×8 for base).
       - Flux VAE encodes 256×256 → (B, 16, 32, 32) latent.
-      - Each token (1024 dim) predicts one 8×8 patch across all 16 channels:
-        1024 = 16 channels × 8 rows × 8 cols.
-      - Spatial Unfold reassembles the 4×4 grid of 8×8 patches into (B, 16, 32, 32).
+      - The projection predicts one spatial latent patch per token.
+      - Spatial Unfold reassembles the patches into (B, 16, 32, 32).
 
     Args:
         config: AffordanceVLAConfig.
@@ -397,10 +396,15 @@ class Which2ActFluxDecoder(nn.Module):
         self.loss_weight = config.which2act_loss_weight
 
         self.num_tokens = config.which2act_num_tokens
+        if self.num_tokens <= 0:
+            raise ValueError("which2act_num_tokens must be positive")
         self.grid_size = int(math.isqrt(self.num_tokens))
-        assert self.grid_size * self.grid_size == self.num_tokens
+        if self.grid_size * self.grid_size != self.num_tokens:
+            raise ValueError("which2act_num_tokens must form a square grid")
 
         self.latent_spatial = FLUX_VAE_INPUT_SIZE // FLUX_VAE_DOWNSAMPLE
+        if self.latent_spatial % self.grid_size:
+            raise ValueError("Which2Act token grid must evenly divide the VAE latent grid")
         self.patch_size = self.latent_spatial // self.grid_size
 
         self.scaling_factor = flux_vae.config.scaling_factor
@@ -408,16 +412,11 @@ class Which2ActFluxDecoder(nn.Module):
 
         gen_hidden_dim = config.gen_expert_config.hidden_size
         latent_patch_dim = FLUX_VAE_LATENT_CHANNELS * self.patch_size * self.patch_size
-        assert gen_hidden_dim == latent_patch_dim, (
-            f"gen_hidden_dim ({gen_hidden_dim}) must equal "
-            f"latent_channels * patch_size^2 ({latent_patch_dim})"
-        )
-
         self.proj_head = nn.Sequential(
             nn.LayerNorm(gen_hidden_dim),
             nn.Linear(gen_hidden_dim, gen_hidden_dim * 2),
             nn.GELU(),
-            nn.Linear(gen_hidden_dim * 2, gen_hidden_dim),
+            nn.Linear(gen_hidden_dim * 2, latent_patch_dim),
         )
 
     def train(self, mode: bool = True):

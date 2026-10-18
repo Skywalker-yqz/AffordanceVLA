@@ -4,9 +4,9 @@
 
 [![Project Page](https://img.shields.io/badge/Project-Page-8A5CD0)](https://skywalker-yqz.github.io/AffordanceVLA/) [![Paper](https://img.shields.io/badge/Paper-arXiv-b31b1b)](https://arxiv.org/abs/2606.06155) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-[Qize Yu](https://skywalker-yqz.github.io/)<sup>1,†</sup>, [Jiadi You](https://scholar.google.com/citations?hl=en&user=G5RR8WEAAAAJ)<sup>2,†</sup>, [Yuran Wang](https://wayrise.github.io/)<sup>1</sup>, [Jiaqi Liang](https://github.com/SCreatorX)<sup>1</sup>, [Bowen Ping](https://scholar.google.com/citations?hl=zh-CN&user=DjcKZdkAAAAJ)<sup>1</sup>, [Yang Tian](https://scholar.google.com/citations?user=leXXHKwAAAAJ&hl=zh-CN)<sup>1</sup>, [Yue Chen](https://yuechen0614.github.io/)<sup>1</sup>, [Minghong Cai](https://onevfall.github.io/personal_page/)<sup>3</sup>, [Zeying Gong](https://zeying-gong.github.io/)<sup>2</sup>, [Ruihai Wu](https://warshallrho.github.io/)<sup>1</sup>, [Yinchuan Li](https://yinchuanll.github.io/)<sup>4</sup>, [Junwei Liang](https://junweiliang.me/)<sup>2,\*</sup>, [Yingcong Chen](https://www.yingcong.me/)<sup>2,\*</sup>
+[Qize Yu](https://skywalker-yqz.github.io/)<sup>1,†</sup>, [Jiadi You](https://scholar.google.com/citations?hl=en&user=G5RR8WEAAAAJ)<sup>2,†</sup>, [Yuran Wang](https://wayrise.github.io/)<sup>1</sup>, [Jiaqi Liang](https://screatorx.github.io/SCreatorX/)<sup>1</sup>, [Bowen Ping](https://scholar.google.com/citations?hl=zh-CN&user=DjcKZdkAAAAJ)<sup>1</sup>, [Yang Tian](https://nimolty.github.io/homepage/)<sup>1</sup>, [Yue Chen](https://yuechen0614.github.io/)<sup>1</sup>, [Bohan Zhou](https://zhoubohan0.github.io/)<sup>1,3</sup>, [Wenxuan Song](https://songwxuan.github.io/)<sup>2</sup>, [Minghong Cai](https://onevfall.github.io/personal_page/)<sup>3</sup>, [Zeying Gong](https://zeying-gong.github.io/)<sup>2</sup>, [Ruihai Wu](https://warshallrho.github.io/)<sup>1</sup>, [Yinchuan Li](https://yinchuanll.github.io/)<sup>4</sup>, [Junwei Liang](https://junweiliang.me/)<sup>2,*</sup>, [Yingcong Chen](https://www.yingcong.me/)<sup>2,*</sup>
 
-<sup>1</sup>Peking University &nbsp;&nbsp; <sup>2</sup>HKUST (Guangzhou) &nbsp;&nbsp; <sup>3</sup>CUHK &nbsp;&nbsp; <sup>4</sup>Knowin AI
+<sup>1</sup>Peking University &nbsp;&nbsp; <sup>2</sup>HKUST (GZ) &nbsp;&nbsp; <sup>3</sup>The Chinese University of Hong Kong &nbsp;&nbsp; <sup>4</sup>Knowin AI
 
 <sup>†</sup>Equal contribution &nbsp;&nbsp; <sup>*</sup>Corresponding authors
 
@@ -15,6 +15,8 @@
 ![AffordanceVLA overview](assets/teaser.png)
 
 AffordanceVLA introduces **structured affordance forecasting** as a task-oriented intermediate representation that bridges vision, language, and action. It models manipulation priors through three complementary components — **Which2Act** (object-centric grounding via visual-latent prediction), **Where2Act** (2D interaction localization via affordance maps), and **How2Act** (3D geometric reasoning) — integrated into a **Mixture-of-Transformer (MoT)** architecture and trained with a three-stage progressive curriculum.
+
+The framework is designed to scale affordance-centric vision-language supervision into stronger affordance representations and, in turn, scalable robot control. The latest evaluation covers ID and OOD simulation across LIBERO, CALVIN, RoboCasa, and LIBERO-Plus, together with real-world manipulation.
 
 This repository contains the model, training, and the automated affordance-annotation pipeline. For results, qualitative demos, and analysis, please see the [project page](https://skywalker-yqz.github.io/AffordanceVLA/).
 
@@ -26,9 +28,9 @@ This repository contains the model, training, and the automated affordance-annot
 
 The framework comprises three specialized experts coordinated by a unidirectional **Understanding–Affordance–Action (UAA) progressive attention**:
 
-- **Understanding Expert** (M<sub>und</sub>, PaliGemma: SigLIP + Gemma) fuses the observation O<sub>t</sub>, instruction *l*, and proprioceptive state s<sub>t</sub> into an instruction-aware multimodal representation h<sub>und</sub>.
+- **Understanding Expert** (M<sub>und</sub>, PaliGemma: SigLIP + Gemma) fuses the observation O<sub>t</sub> and instruction *l* into an instruction-aware multimodal representation h<sub>und</sub>.
 - **Affordance Generation Expert** (M<sub>gen</sub>, Gemma + learnable queries) decodes h<sub>und</sub> into structured affordance tokens Â<sub>t</sub> (Which2Act, Where2Act, How2Act).
-- **Action Expert** (M<sub>act</sub>, Gemma, flow matching) synthesizes the action chunk â<sub>t:t+k</sub> conditioned on h<sub>und</sub> and Â<sub>t</sub>.
+- **Action Expert** (M<sub>act</sub>, Gemma, flow matching) synthesizes the action chunk â<sub>t:t+k</sub> conditioned on h<sub>und</sub>, Â<sub>t</sub>, and proprioceptive state s<sub>t</sub>.
 
 UAA attention is bidirectional within each expert and strictly causal across experts: the Affordance Generation expert attends to the Understanding expert only, and the Action expert attends to both. This keeps action information from leaking into the affordance prediction stage (`src/utils/model_utils.py::make_att_2d_masks`).
 
@@ -53,11 +55,47 @@ The Which2Act loss is selected by `WHICH2ACT_FLUX_LOSS_TYPE` at the top of `src/
 
 | Stage | Data | Trained | Frozen |
 |-------|------|---------|--------|
-| **I — Affordance** | PRISM, AGD20K, RefSpatial, VQA | Affordance Generation expert, queries, decoders (How2Act trainable; toggle via `STAGE1_TRAIN_HOW2ACT`) | Vision Encoder, Understanding, Action |
+| **I — Affordance** | Curated 8.8M Grounding and Pointing samples | Affordance Generation expert, queries, decoders (including How2Act) | Vision Encoder, Understanding, Action |
 | **II — Robotic Co-Training** | InternData-A1 (synthetic robot) | All experts + decoders; Vision Encoder fine-tuned at a lower LR | — |
 | **III — Target Post-Training** | LIBERO / CALVIN | Same trainable set as Stage II | — |
 
 `STAGE1_TRAIN_HOW2ACT` and `STAGE2_FREEZE_VISION_ENCODER` (top of `src/train.py`) control these toggles. By default Stage I trains the How2Act decoder, and Stages II/III fine-tune the vision encoder at `training.vision_encoder_lr`.
+
+Stage I uses a cleaned **8.8M-sample subset** assembled from the following grounding and pointing pools. Parenthetical values are the native numbers of spatial-supervision records reported by each source, in millions; they describe the candidate source pools rather than the number of records consumed in Stage I.
+
+| Grounding source | Native records (M) |
+|------------------|-------------------:|
+| Objects365 | 30.000 |
+| Open Images V7 | 15.852 |
+| Visual Genome | 5.400 |
+| Flickr30K Entities | 0.276 |
+| RefCOCO / RefCOCO+ / RefCOCOg | 0.388 |
+| LVIS v1 | 2.200 |
+| MS COCO | 2.500 |
+| LLaVA-OneVision-2-Spatial | 4.000 |
+| Ego4D-FHO | 0.091 |
+| VISOR | 9.900 |
+| MECCANO | 0.202 |
+| GEM-250K(4M) | 0.200 |
+
+| Pointing source | Native records (M) |
+|-----------------|-------------------:|
+| SA-1B | 1,100.000 |
+| RefSpatial | 2.500 |
+| PixMo-Points | 2.380 |
+| PRISM | 0.412 |
+| AGD20K | 0.020 |
+| ACRONYM | 17.700 |
+| RoboAfford | 1.900 |
+| RoboInter-VQA / Data | 2.300 |
+| RoboSpatial | 3.000 |
+| HOI4D | 2.400 |
+| H2O | 0.572 |
+| EgoDex | 90.000 |
+
+![AffordanceVLA scaling study](assets/scaling.png)
+
+> **Scaling finding. Scalable VQA affordance supervision → stronger affordance representations → scalable robot control.**
 
 ### Model variants
 
@@ -69,47 +107,32 @@ The token allocation of the Affordance Generation expert is fully driven by the 
 | AffordanceVLA-fast | 16 | 16 |  30 | 2 |  32 |  64 | Flux VAE |
 | AffordanceVLA      | 64 | 64 | 256 | 4 | 260 | 388 | Flux VAE |
 
-The shipped `configs/stage1.yaml` / `stage2.yaml` / `stage3 *.yaml` use the **AffordanceVLA-fast** layout (16 / 16 / 30+2). Switch variants by editing the four token fields above. An optional wrist token group can be appended at any scale by setting `control_wristtoken: true`; it shares the same decoder architecture and weights as Which2Act and is supervised by the full wrist-camera image.
+The shipped `configs/stage1.yaml` / `stage2.yaml` / `stage3 *.yaml` use the **AffordanceVLA** layout (64 / 64 / 256+4). Switch variants by editing the token fields above, keeping `how2act_num_tokens` equal to the sum of shape and layout tokens. The main configuration sets `control_wristtoken: false`. An optional wrist token group can be appended with `control_wristtoken: true`; it shares the Which2Act decoder and is supervised by the full wrist-camera image.
 
-> **Note.** With the Flux VAE backend, the projection head requires
-> `gen_hidden_dim == latent_channels × patch_size²` so that
-> `D_proj = 16384 / which2act_num_tokens` matches the generation expert hidden
-> size. The fast variant satisfies this with 16 tokens. Other token counts
-> require a corresponding change to the projection head in
-> `src/models/which2act_decoder.py::Which2ActFluxDecoder`.
+The Flux projection head maps each token to its corresponding latent patch, supporting both the fast and full layouts.
 
-`configs/` — training configurations:
+## Real-world deployment
+
+![AffordanceVLA real-world deployment](assets/real_world.png)
+
+The figure illustrates representative real-world manipulation rollouts. Robot control is built with [frankapy](https://github.com/iamlab-cmu/frankapy), a Python interface for Franka Emika Panda research arms. The policy uses closed-loop replanning with the first five actions of each predicted chunk.
 
 
 ## Installation
 
-The full pipeline integrates several heavyweight stacks (the VLA model, two
-robot simulators, and multiple vision/grounding services) whose dependencies
-are mutually incompatible. We therefore ship one frozen `pip freeze` per role
-under [`env/`](env/) rather than a single root-level `requirements.txt`. See
-[`env/README.md`](env/README.md) for the full matrix; the main training
-environment is:
+Create the model environment from a fresh Python 3.11 installation:
 
 ```bash
 conda create -n affordancevla python=3.11 -y
 conda activate affordancevla
-pip install -r env/requirements_AffordanceVLA.txt
+python -m pip install torch==2.2.0 torchvision==0.17.0 --index-url https://download.pytorch.org/whl/cu121
+python -m pip install -r env/requirements_core.txt
+python -m pip check
 ```
 
-For CALVIN / LIBERO evaluation and the auxiliary RexOmni / SAM-3D services,
-install the corresponding `env/requirements_*.txt` into a separate conda
-environment (Python version per `env/README.md`).
+See [`env/README.md`](env/README.md) for environment verification and optional simulator and service setup. H800 and H200 use the same CUDA model environment. Set the per-device microbatch to fit the available memory; the trainer derives gradient accumulation to preserve the configured effective batch size.
 
-> **Before running `pip install -r`**, two entries in the requirements files
-> require manual handling due to environment-deployment conflicts: the SAM3D
-> editable install (`-e /mnt/...`) and the `flash-attn` local wheel
-> (`file:///mnt/...`). Delete those lines from the respective requirements
-> files and install them manually. See [`env/README.md`](env/README.md) for
-> the exact steps.
-
-The code is developed and validated with PyTorch (CUDA) on NVIDIA H200 GPUs.
-
-**Compute.** We recommend **at least 8× H200** for training, so that the per-step (effective) batch size in the configs can be reproduced without gradient accumulation. The released results were produced on **8× H200**, **16× H200**, and **16× B200** setups.
+The paper's training recipe uses 16 NVIDIA H200 GPUs. Stage I, Stage II, and target-benchmark post-training use effective batch sizes of 3,072, 1,024, and 256, respectively.
 
 ## Pretrained weights
 
@@ -130,60 +153,39 @@ Set `model.which2act_flux_vae_path=null` (Flux mode) or `model.which2act_vae_ckp
 
 ## Data & affordance-annotation pipeline
 
-Robot datasets (InternData-A1, LIBERO, CALVIN, DROID) do not natively contain dense affordance labels. The `src/datasets/preprocessing/` package implements the automated pipeline that synthesizes them:
+Stage I uses **8.8M** curated grounding and pointing samples, with native spatial supervision normalized into common affordance targets. Stage II uses the full **InternData-A1 simulation dataset**. Stage III fine-tunes on the target benchmark, **LIBERO** or **CALVIN**; real-world adaptation uses a curated **DROID** subset followed by task demonstrations.
 
-1. **Step 0 — RexOmni fine-tuning** on PRISM (offline; served via `src/services/rexomni_service.py`).
-2. **Step 1 — Rule-based keyframe detection** (`keyframe_detection.py`): six rules (Start, Pre-Action, Gripper, Stop, Apex, End) over the robot state, all enabled by default.
-3. **Step 2a — Instruction decomposition** (`instruction_decomposition.py`, **Prompt A**): a text LLM splits the long-horizon instruction into per-keyframe sub-instructions. The LLM client is loaded by name from a separate module (set `LLM_CLIENT_MODULE` at the top of the file). The prompt templates `SYSTEM_PROMPT` / `USER_PROMPT_TEMPLATE` are intentionally left empty.
-4. **Step 2b — Per-keyframe annotation** (`keyframe_affordance_annotation.py`, **Prompt B**): a VLM emits a RexOmni-style detection category + spatial "where-to" affordance query per keyframe. The default backend is RexOmni; Qwen3-VL is available as a side path (`ANNOTATION_BACKEND` toggle). Endpoints / tokens come from environment variables (see `EnvVars` inside the file). Prompt templates are likewise left empty.
-5. **Step 3 — Visual grounding & affordance generation** (`RexOmni_SAM_Affordance_pipeline.py`): the grounding model produces a bbox + affordance point, SAM segments the target, and a mask-bounded Gaussian heatmap is generated.
-6. **Step 4 — Quality verification**: `pipeline.annotate_frame` returns a `passes_qc` flag based on a point-in-bbox consistency check (`POINT_IN_BBOX_TOLERANCE_PX` at the top of `pipeline.py`).
+The annotation pipeline in `src/datasets/preprocessing/` combines keyframe detection, instruction decomposition, visual grounding, SAM segmentation, and SAM-3D shape and layout prediction. Its targets supervise Which2Act, Where2Act, and How2Act jointly.
 
-The end-to-end orchestration lives in `src/datasets/preprocessing/pipeline.py`. SAM-3D shape and layout tokens are extracted optionally by setting `SAM3D_SERVICE_URL` at the top of that file; the same switch can be enabled for Stage I VQA-style sources via `pipeline.annotate_vqa_sample(enable_sam3d=True, ...)`.
+### Dataset interface
 
-> Prompt templates and LLM/VLM clients are not bundled. Fill in the `SYSTEM_PROMPT` / `USER_PROMPT_TEMPLATE` constants in
-> `instruction_decomposition.py` and `keyframe_affordance_annotation.py`,
-> and provide an LLM client module exposing `call(system_prompt, user_prompt) -> str` (and, for Step 2b, `call_with_image(...)`).
+Dataset adapters return the `AffordanceSample` schema in `src/datasets/base_dataset.py`. The package provides image and heatmap conversion, action processing, sample constructors, collation, and distributed dataset mixing. Configure a dataset adapter with its Python `factory` and constructor `kwargs`, or register the named dataset class in `src.datasets`.
 
-### Dataset loaders
-
-Concrete `Dataset` classes for the four Stage I sources (PRISM, AGD20K, RefSpatial, VQA) and the three robot datasets (InternData-A1, LIBERO, CALVIN) are intentionally not bundled, since each source's on-disk format depends on which release / split / archive you download. The Stage I sources all ship with their own native labels (heatmaps, segmentation maps, bounding boxes, or interaction points) — consume them directly rather than re-running RexOmni. We recommend writing the loaders via vibe coding: feed a few real samples and the schema of your downloaded data to a coding agent, and have it produce a loader that yields the unified `AffordanceSample` dict expected by `src/datasets/collate.py::affordance_collate_fn` and `src/train.py::create_datasets`.
-
-The schema and reusable building blocks are bundled in `src/datasets/base_dataset.py`: the `AffordanceSample` `TypedDict` (the data contract), the `LayoutToken` schema, tensor helpers (`image_to_tensor`, `heatmap_to_tensor`, `resize_sample`), the `build_stage1_sample` / `build_stage2_sample` constructors, and the `BaseAffordanceDataset` base class. Build your loader against these — `AffordanceSample` and the constructors are also re-exported from `src.datasets`.
+```yaml
+data:
+  datasets:
+    - type: vqa
+      factory: my_data.grounding.GroundingDataset
+      kwargs:
+        root: data/VQA
+```
 
 ### Service startup
 
-Bring up the auxiliary services first (each runs in its own conda environment):
+Run each service in its component environment:
 
 ```bash
-# RexOmni + SAM (detection / pointing / SAM segmentation / full pipeline)
-# Update REXOMNI_MODEL_PATH at the top of the file to use a fine-tuned checkpoint.
-conda activate rexomni
+# Rex-Omni and SAM
 python -m src.services.rexomni_service \
-    --port 7862 \
-    --preload \
-    --model_path /path/to/rexomni-finetuned \
-    --sam_checkpoint /path/to/sam_vit_h.pth
+    --port 7862 --preload \
+    --model_path pretrained/rexomni-finetuned \
+    --sam_checkpoint pretrained/sam_vit_h.pth
 
-# SAM-3D (shape latent + layout tokens)
-conda activate SAM3D
-python -m src.services.sam3d_service \
-    --port 17861 \
-    --mode latent \
-    --preload
+# SAM-3D
+python -m src.services.sam3d_service --port 17861 --mode latent --preload
 ```
 
-For the VLM endpoints used by Step 2 (when `VLM_CLIENT_MODULE` is not set), supply the corresponding URL / token through environment variables:
-
-```bash
-# Step 2a — text LLM
-export LLM_API_URL=...
-export LLM_API_TOKEN=...
-
-# Step 2b — VLM (variables consulted depend on ANNOTATION_BACKEND)
-export REXOMNI_VLM_URL=...    REXOMNI_VLM_TOKEN=...     # RexOmni backend
-export QWEN3_VL_API_URL=...   QWEN3_VL_API_TOKEN=...    # Qwen3-VL backend
-```
+Configure the instruction and annotation model clients in `instruction_decomposition.py` and `keyframe_affordance_annotation.py`. Service endpoints and access tokens are supplied through environment variables.
 
 ## Training
 
@@ -200,44 +202,47 @@ configs/
 └── debug_flux_vae.yaml                 # Smoke test for the Flux VAE pipeline
 ```
 
-The dataset-specific loaders (PRISM / AGD20K / RefSpatial / VQA / A1 / LIBERO / CALVIN) are not bundled — as described under [Dataset loaders](#dataset-loaders), write your own (vibe coding recommended) so each yields the unified `AffordanceSample` defined in `src/datasets/base_dataset.py`. The VQA source is a data pool of ~18,000,000 entries (Rex-Omni's open-source subset + Knowin AI in-house data; see `data/VQA/README.md`). Only a sampled portion is used for training, and different model variants draw different sampling magnitudes. The specific subset will be partially open-sourced after a license-legality review of the collected data.
+The configurations follow Appendix G of the paper. `batch_size` is the per-device microbatch; `effective_batch_size` includes all devices and gradient accumulation. Stage I runs for 300K optimizer updates with a cosine schedule. Stage II runs for 230K updates with a constant learning rate. LIBERO and CALVIN post-training use 20 epochs and cosine schedules. All stages use a base learning rate of 5 × 10⁻⁵.
 
 ```bash
 # Stage I — affordance grounding pre-training
-torchrun --nproc_per_node=8 -m src.train --config configs/stage1.yaml --mode train \
+export PRETRAINED_ROOT="$PWD/pretrained"
+torchrun --nproc_per_node=16 -m src.train --config configs/stage1.yaml --mode train \
     model.pretrained_path=$PRETRAINED_ROOT/pi0_base \
     model.language_tokenizer_path=$PRETRAINED_ROOT/paligemma-3b-pt-224 \
-    model.which2act_flux_vae_path=$PRETRAINED_ROOT/flux-vae
+    model.which2act_flux_vae_path=$PRETRAINED_ROOT/flux_vae
 
 # Stage II — robotic co-training (init from Stage I)
-torchrun --nproc_per_node=8 -m src.train --config configs/stage2.yaml --mode train \
+torchrun --nproc_per_node=16 -m src.train --config configs/stage2.yaml --mode train \
     model.pretrained_path=$PRETRAINED_ROOT/pi0_base \
-    model.load_ckpt=outputs/stage1/checkpoint-XXXXX \
+    model.load_ckpt=outputs/stage1/checkpoint-300000 \
     model.language_tokenizer_path=$PRETRAINED_ROOT/paligemma-3b-pt-224 \
-    model.which2act_flux_vae_path=$PRETRAINED_ROOT/flux-vae
+    model.which2act_flux_vae_path=$PRETRAINED_ROOT/flux_vae
 
 # Stage III — target-task fine-tuning (init from Stage II)
-torchrun --nproc_per_node=8 -m src.train --config "configs/stage3 CALVIN.yaml" --mode train \
-    model.load_ckpt=outputs/stage2/checkpoint-XXXXX ...
-torchrun --nproc_per_node=8 -m src.train --config "configs/stage3 Libero.yaml" --mode train \
-    model.load_ckpt=outputs/stage2/checkpoint-XXXXX ...
+torchrun --nproc_per_node=16 -m src.train --config "configs/stage3 CALVIN.yaml" --mode train \
+    model.load_ckpt=outputs/stage2/checkpoint-230000
+torchrun --nproc_per_node=16 -m src.train --config "configs/stage3 Libero.yaml" --mode train \
+    model.load_ckpt=outputs/stage2/checkpoint-230000
 ```
 
 ### Loss weighting
 
 The Affordance loss decomposes into four terms whose internal ratio is fixed at
 `which : where : shape : layout = 5 : 5 : 5 : 2`. The action flow-matching loss
-weight stays at `1.0`. The two stages differ only in the *aggregate* affordance
-weight relative to the action loss:
+weight stays at `1.0`. The task-level coefficient multiplies the weighted affordance objective,
+`L_afd = 0.1 L_which + 0.1 L_where + 0.1 L_shape + 0.04 L_layout`:
 
-| Stage | Aggregate Afd : Act | `which2act_loss_weight` | `where2act_loss_weight` | `how2act_shape_loss_weight` | `how2act_layout_loss_weight` |
+| Stage | λ<sub>afd</sub> : λ<sub>act</sub> | `which2act_loss_weight` | `where2act_loss_weight` | `how2act_shape_loss_weight` | `how2act_layout_loss_weight` |
 |-------|---------------------|-------------------------|-------------------------|-----------------------------|------------------------------|
-| Stage II  | 0.50 : 1 | 0.147  | 0.147  | 0.147  | 0.0588 |
-| Stage III | 0.15 : 1 | 0.0441 | 0.0441 | 0.0441 | 0.0176 |
+| Stage II  | 0.50 : 1 | 0.05 | 0.05 | 0.05 | 0.02 |
+| Stage III | 0.15 : 1 | 0.015 | 0.015 | 0.015 | 0.006 |
 
 In Stage I the action loss is inactive (no ground-truth actions); Stage I keeps the original 0.1 / 0.1 / 0.1 / 0.04 weights, which preserves the 5 : 5 : 5 : 2 internal ratio.
 
 ### Configuration notes
+
+The paper also applies mild perturbations to the affordance features supplied to the Action Expert during policy training, while using the original predictions at inference. Select the application stage and strength according to training stability in your task-specific training loop. The repository does not include a built-in perturbation hook.
 
 - `model.chunk_size` must equal `data.chunk_size` (the action attention mask is built from `model.chunk_size`).
 - `control_wristtoken` is optional: when set, an extra wrist token group (sharing the Which2Act decoder) is appended; the wrist token is inactive in Stage I (no wrist data) and supervised by the full wrist image in Stage II/III.
@@ -252,27 +257,27 @@ python -m src.train --config configs/stage1.yaml
 touch outputs/stage1/STOP
 ```
 
-## LIBERO evaluation notes
+## Evaluation
 
-The original LIBERO HDF5 demonstrations store agent-view RGB frames upside-down (OpenGL convention), and require a **vertical flip** (`[::-1]`) — not a 180-degree rotation — when consumed by training and evaluation. We recommend following the LIBERO benchmark setup released by [openvla/openvla](https://github.com/openvla/openvla), whose evaluation pipeline ships at 256×256 (vs. the original 128×128) and improves the upper bound of perception-driven policies.
+We evaluate AffordanceVLA on LIBERO, CALVIN ABC→D, RoboCasa, LIBERO-Plus, and real-world manipulation. Use the benchmark's observation preprocessing and action conventions when connecting `AffordanceVLAPolicy` to an evaluation environment. The [project page](https://skywalker-yqz.github.io/AffordanceVLA/) and paper provide quantitative results and qualitative rollouts.
 
-Empirical notes that may save debugging time when porting a LIBERO checkpoint to a new evaluation harness:
+## Repository structure
 
-- Make sure the gripper command sent to the OSC controller has the same sign convention as the demonstrations (`+1 = close, -1 = open` with `np.sign`-based gating). Predicting a continuous openness value and forwarding it directly may flip the gripper direction during the early grasp phase.
-- When `CONTROL_SPEED=True`, the model outputs *normalized* delta actions in `[-1, 1]`; convert them back to OSC space using the same `pos_limit` / `ori_limit` that were used during data preparation, otherwise rotation magnitudes are systematically attenuated.
-- Position OSC commands are clipped to `[-1, 1]`; large per-step displacements may be silently truncated. Keep this in mind when comparing per-step physical motion against the model's intent.
-
-## Known issues & notes
-
-**Video-decoding memory growth (PyAV/FFmpeg).** When training on video-based data (e.g., InternData-A1), repeated PyAV/FFmpeg decoding makes host RSS grow monotonically across steps, eventually raising `Cannot allocate memory` and triggering cascading DDP/NCCL failures. The root cause is *not* a missing Python `del`: decoding spans low-level C/C++ decoders, mmap, buffer pools, and malloc arenas, replicated across DataLoader workers and DDP ranks — state that Python-side `del` / `gc.collect()` cannot fully reclaim. The practical fix bounds the growth rather than fully fixing FFmpeg's release path:
-
-- Explicitly close decoder/container objects, delete temporary frame arrays, and call `gc.collect()` periodically.
-- Clear Dataset/trajectory caches and reclaim memory at training-loop boundaries.
-- Most importantly, set `persistent_workers=False` and lower `prefetch_factor` so DataLoader workers restart periodically, truncating low-level decoder accumulation at the process level.
-
-This turns unbounded memory growth into a bounded, recoverable state. See [this analysis](https://blog.csdn.net/qq_52184520/article/details/156071663) for details.
-
-**InternData-A1 — re-download if needed.** If you downloaded InternData-A1 *before 2026/01/15*, please re-download from [InternRobotics/InternData-A1](https://huggingface.co/datasets/InternRobotics/InternData-A1/tree/main): our co-author fixed minor issues in the Franka basic-task subset and added camera intrinsics/extrinsics plus a LeRobot 3.0 export.
+```text
+assets/                 Paper figures
+configs/                Stage I–III training configurations
+data/                   Dataset references and sample organization
+env/                    Installation and dependency specifications
+src/models/             MoT backbone and affordance decoders
+src/policies/           Training and inference policy
+src/processors/         Optimizer and training schedules
+src/datasets/           Data interfaces and preprocessing
+src/services/           Rex-Omni and SAM-3D service wrappers
+LIBERO/                 LIBERO benchmark reference
+calvin/                 CALVIN benchmark reference
+Rex-Omni/               Rex-Omni reference
+SAM3D/                  SAM-3D reference
+```
 
 ## Explore more awesome affordance
 
@@ -285,10 +290,11 @@ This turns unbounded memory growth into a bounded, recoverable state. See [this 
 
 - [x] Paper
 - [x] Project page
-- [x] Model & training code (main structure)
+- [x] Model and training code
 - [x] Affordance-annotation / data-preprocessing pipeline code
-- [ ] **Data release** — partial open-source of the collected subsets, pending a license-legality review of the data pool.
-- [ ] **Model weights** — pending confirmation of the weight license definition.
+- [ ] **Real-robot code** — release the `frankapy`-based deployment stack.
+- [ ] Data and annotations
+- [ ] Model weights
 
 ## Citation
 
@@ -296,13 +302,13 @@ If you find AffordanceVLA useful, please consider citing our [paper](https://arx
 
 ```bibtex
 @misc{yu2026affordancevlavisionlanguageactionmodelempowering,
-      title={AffordanceVLA: A Vision-Language-Action Model Empowering Action Generation through Affordance-Aware Understanding}, 
+      title={{AffordanceVLA}: A Vision-Language-Action Model Empowering Action Generation through Affordance-Aware Understanding},
       author={Qize Yu and Jiadi You and Yuran Wang and Jiaqi Liang and Bowen Ping and Yang Tian and Yue Chen and Minghong Cai and Zeying Gong and Ruihai Wu and Yinchuan Li and Junwei Liang and Yingcong Chen},
       year={2026},
       eprint={2606.06155},
       archivePrefix={arXiv},
       primaryClass={cs.RO},
-      url={https://arxiv.org/abs/2606.06155}, 
+      url={https://arxiv.org/abs/2606.06155},
 }
 ```
 
@@ -311,7 +317,7 @@ If you find AffordanceVLA useful, please consider citing our [paper](https://arx
 The MoT backbone and flow-matching action expert build on the open-source VLA
 ecosystem (π<sub>0</sub> / PaliGemma); the data pipeline integrates
 [RexOmni](https://github.com/IDEA-Research/Rex-Omni), [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL),
-[SAM](https://github.com/facebookresearch/segment-anything), and SAM-3D.
+[SAM](https://github.com/facebookresearch/segment-anything), and [SAM-3D](https://github.com/facebookresearch/sam-3d-objects).
 The LIBERO evaluation setup follows [openvla/openvla](https://github.com/openvla/openvla).
 
 ## License

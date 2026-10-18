@@ -360,7 +360,6 @@ safetensors==0.7.0
 sagemaker==2.242.0
 sagemaker-core==1.0.71
 # Editable install with no version control (sam3d_objects==0.0.1)
--e /mnt/users/AffordanceVLA/SAM3D
 schema==0.7.8
 scikit-image==0.23.1
 scikit-learn==1.7.2

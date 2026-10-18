@@ -1,31 +1,30 @@
-# ──────────────────────────────────────────────────────────────
-# Debug config: test Flux VAE pipeline (minimal data, 10 steps)
-# Launch:
-#   conda run -n AffordanceVLA python -m src.train --config configs/debug_flux_vae.yaml
-# ──────────────────────────────────────────────────────────────
+# AffordanceVLA-fast configuration for local smoke tests.
 
+# Model
 model:
-  pretrained_path: /mnt/data/pretrained_models/pi0_base
+  # Pretrained weights
+  pretrained_path: pretrained/pi0_base
   load_ckpt: null
-  language_tokenizer_path: /mnt/data/pretrained_models/paligemma-3b-pt-224
-
-  # ── Flux VAE mode ON ──
+  language_tokenizer_path: pretrained/paligemma-3b-pt-224
   which2act_use_flux_vae: true
-  which2act_flux_vae_path: /mnt/data/pretrained_models/flux_vae
+  which2act_flux_vae_path: pretrained/flux_vae
   which2act_vae_ckpt: null
 
+  # Architecture
   chunk_size: 50
   max_action_dim: 32
   max_state_dim: 32
   num_steps: 10
   attention_implementation: eager
-  resize_imgs_with_padding: "(224, 224)"
+  resize_imgs_with_padding: (224, 224)
 
+  # Affordance queries
   which2act_num_tokens: 16
   where2act_num_tokens: 16
   how2act_num_tokens: 32
   query_init_std: 0.02
 
+  # Which2Act decoder
   which2act_vae_vocab_size: 4096
   which2act_vae_z_channels: 32
   which2act_vae_ch: 160
@@ -38,6 +37,7 @@ model:
   which2act_label_smoothing: 0.1
   control_wristtoken: true
 
+  # Where2Act decoder
   where2act_heatmap_h: 24
   where2act_heatmap_w: 24
   where2act_decoder_layers: 4
@@ -45,6 +45,7 @@ model:
   where2act_decoder_dim: 256
   where2act_loss_weight: 0.1
 
+  # How2Act decoder
   how2act_shape_num_tokens: 30
   how2act_layout_num_tokens: 2
   how2act_shape_denoiser_dim: 512
@@ -55,6 +56,7 @@ model:
   how2act_shape_loss_weight: 0.1
   how2act_layout_loss_weight: 0.04
 
+# Data
 data:
   chunk_size: 50
   control_frame: true
@@ -64,38 +66,43 @@ data:
   ori_limit: 0.1
   datasets:
     - type: a1
-      preprocessed_root: /mnt/users/AffordanceVLA/data/preprocessed/InternData-A1/sim
-      raw_root: /mnt/users/AffordanceVLA/data/InternData-A1/sim
-      frames_root: /mnt/nas/InternData-A1_frames/sim
+      preprocessed_root: data/preprocessed/InternData-A1/sim
+      raw_root: data/InternData-A1/sim
+      frames_root: data/InternData-A1_frames/sim
       debug_task: pick_and_place_tasks/franka/continues_pick_and_place_part1
 
+# Training
 training:
   stage: stage2
   output_dir: outputs/debug_flux_vae
 
+  # Batch and training budget
   batch_size: 2
   max_steps: 10
   num_workers: 0
 
-  learning_rate: 5.0e-5
+  # Optimization
+  learning_rate: 5.0e-05
   vision_encoder_lr: 0.0
   und_expert_lr: 0.0
-  gen_expert_lr: 5.0e-5
-  act_expert_lr: 5.0e-5
-
-  weight_decay: 1.0e-4
+  gen_expert_lr: 5.0e-05
+  act_expert_lr: 5.0e-05
+  weight_decay: 0.0001
   adam_beta1: 0.9
   adam_beta2: 0.95
-  adam_eps: 1.0e-8
+  adam_eps: 1.0e-08
   max_grad_norm: 1.0
   warmup_steps: 2
 
+  # Logging and checkpointing
   log_every: 1
   save_every: 100
 
+  # Runtime
   bf16: false
   resume_from_checkpoint: null
   seed: 42
   log_level: INFO
 
+  # Experiment tracking
   wandb_enabled: false

@@ -33,7 +33,7 @@ def create_optimizer(opt_model, args):
     """
     # Identify parameters that should NOT receive weight decay
     decay_parameters = get_parameter_names(
-        opt_model, ALL_LAYERNORM_LAYERS, ["bias", "layernorm", "rmsnorm"]
+        opt_model, ALL_LAYERNORM_LAYERS
     )
     decay_parameters = [name for name in decay_parameters if "bias" not in name]
 

@@ -15,7 +15,7 @@ Two backends are supported. The default is RexOmni; Qwen3-VL is available as
 a side path. Endpoints / API URLs are not hard-coded — supply them via
 environment variables (see ``EnvVars`` below).
 
-Prompt templates are intentionally left empty: fill in ``SYSTEM_PROMPT`` and
+Configure the dataset-specific prompts through ``SYSTEM_PROMPT`` and
 ``USER_PROMPT_TEMPLATE`` before running.
 """
 

@@ -28,6 +28,8 @@ import os
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 import argparse
+from contextlib import nullcontext
+import importlib
 import datetime
 import logging
 import math
@@ -47,6 +49,7 @@ from omegaconf import OmegaConf
 from src.models.configuration_affordance import AffordanceVLAConfig
 from src.policies.affordance_policy import AffordanceVLAPolicy
 from src.processors.optimizer_scheduler import create_optimizer
+from src.processors.training_schedule import resolve_training_schedule
 try:
     from src.datasets import (
         PRISMDataset, AGD20KDataset, RefSpatialDataset,
@@ -378,10 +381,36 @@ def create_datasets(cfg, mode: str = "debug", force_rescan: bool = False) -> dic
     for ds_cfg in cfg.datasets:
         ds_type = ds_cfg.type
         logger.info(f"Loading dataset: {ds_type}")
+        if ds_cfg.get("factory"):
+            module_name, class_name = ds_cfg.factory.rsplit(".", 1)
+            factory = getattr(importlib.import_module(module_name), class_name)
+            params = OmegaConf.to_container(ds_cfg.get("kwargs", OmegaConf.create({})), resolve=True)
+            datasets[ds_type] = factory(**params)
+            continue
+        loader_names = {
+            "prism": "PRISMDataset", "agd20k": "AGD20KDataset",
+            "refspatial": "RefSpatialDataset", "vqa": "VQADataset",
+            "a1": "A1Dataset", "libero": "LiberoDataset", "calvin": "CalvinDataset",
+        }
+        loader_name = loader_names.get(ds_type)
+        if loader_name:
+            factory = getattr(importlib.import_module("src.datasets"), loader_name, None)
+            if factory is None:
+                raise ValueError(
+                    f"Configure data.datasets factory and kwargs for '{ds_type}', "
+                    f"or register {loader_name} in src.datasets."
+                )
+            globals()[loader_name] = factory
 
         # ── Stage I (mode does not affect dataset assembly) ──
         if ds_type == "prism":
             datasets[ds_type] = PRISMDataset(
+                data_dir=ds_cfg.path,
+                min_bbox_ratio=ds_cfg.get("min_bbox_ratio", 0.0),
+            )
+
+        elif ds_type == "vqa":
+            datasets[ds_type] = VQADataset(
                 data_dir=ds_cfg.path,
                 min_bbox_ratio=ds_cfg.get("min_bbox_ratio", 0.0),
             )
@@ -432,7 +461,7 @@ def create_datasets(cfg, mode: str = "debug", force_rescan: bool = False) -> dic
 
         elif ds_type == "calvin":
             if mode == "train":
-                for split in ["training", "validation"]:
+                for split in ds_cfg.get("splits", ["training"]):
                     key = f"calvin_{split}"
                     datasets[key] = CalvinDataset(
                         preprocessed_dir=ds_cfg.preprocessed_dir, raw_dir=ds_cfg.raw_dir,
@@ -443,10 +472,11 @@ def create_datasets(cfg, mode: str = "debug", force_rescan: bool = False) -> dic
                         pos_limit=pos_limit, ori_limit=ori_limit,
                         force_rescan=force_rescan)
             else:
-                datasets[ds_type] = CalvinDataset(
+                split = ds_cfg.get("debug_split", "training")
+                datasets[f"calvin_{split}"] = CalvinDataset(
                     preprocessed_dir=ds_cfg.preprocessed_dir, raw_dir=ds_cfg.raw_dir,
                     keyframe_results_dir=ds_cfg.keyframe_results_dir,
-                    split=ds_cfg.get("debug_split", "training"), chunk_size=chunk_size,
+                    split=split, chunk_size=chunk_size,
                     control_frame=control_frame, frame_num=frame_num,
                     control_speed=control_speed,
                     pos_limit=pos_limit, ori_limit=ori_limit,
@@ -455,7 +485,7 @@ def create_datasets(cfg, mode: str = "debug", force_rescan: bool = False) -> dic
         else:
             raise ValueError(
                 f"Unknown dataset type: '{ds_type}'. "
-                f"Supported: prism, agd20k, refspatial, a1, libero, calvin"
+                f"Supported: prism, agd20k, refspatial, vqa, a1, libero, calvin"
             )
 
     if not datasets:
@@ -508,8 +538,10 @@ def apply_freeze_strategy(policy: AffordanceVLAPolicy, stage: str):
         # Sync flags so PaliGemmaWithExpertModel.train() preserves eval()
         # on frozen paligemma and gemma_expert (action) after policy.train()
         policy.model.paligemma_with_expert.train_gen_expert_only = True
-    elif stage == "stage2":
-        logger.info("=== Stage II: Train all experts + decoders ===")
+    elif stage in ("stage2", "stage3"):
+        policy.model.paligemma_with_expert.train_gen_expert_only = False
+        policy.model.paligemma_with_expert.freeze_vision_encoder = STAGE2_FREEZE_VISION_ENCODER
+        logger.info(f"=== {stage}: Train all experts + decoders ===")
         for n, p in policy.named_parameters():
             if "vqvae" not in n and "flux_vae" not in n:
                 p.requires_grad = True
@@ -730,14 +762,21 @@ def train(cfg):
     # Optimizer operates on the unwrapped model parameters
     opt_model = policy.module if isinstance(policy, DDP) else policy
     optimizer = create_optimizer(opt_model, cfg.training)
-    total_steps = cfg.training.max_steps
-    scheduler = WarmupCosineScheduler(
-        optimizer, warmup_steps=cfg.training.warmup_steps, total_steps=total_steps
+    accumulation_steps, effective_batch_size, total_steps = resolve_training_schedule(
+        cfg.training, get_world_size(),
+        dataset_sizes={name: len(ds) for name, ds in datasets_dict.items()},
+        weights=ds_weights,
     )
+    if cfg.training.get("lr_scheduler", "cosine") == "constant":
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
+    else:
+        scheduler = WarmupCosineScheduler(
+            optimizer, warmup_steps=cfg.training.warmup_steps, total_steps=total_steps
+        )
 
     # ── 8. Resume ──
     global_step = 0
-    scaler = torch.cuda.amp.GradScaler(enabled=use_bf16)
+    scaler = torch.cuda.amp.GradScaler(enabled=False)
 
     if is_main_process():
         OmegaConf.save(cfg, output_dir / "config.yaml")
@@ -774,7 +813,7 @@ def train(cfg):
     logger.info(
         f"Training: stage={stage}, steps={total_steps}, "
         f"bs={cfg.training.batch_size}×{get_world_size()} GPUs, "
-        f"effective_bs={cfg.training.batch_size * get_world_size()}, "
+        f"accumulation={accumulation_steps}, effective_bs={effective_batch_size}, "
         f"datasets={list(datasets_dict.keys())}"
     )
 
@@ -786,22 +825,35 @@ def train(cfg):
 
     global _SHUTDOWN_REQUESTED
     try:
-        for batch in train_loader:
-            if global_step >= total_steps or _SHUTDOWN_REQUESTED:
-                break
-            if stop_file.exists() and is_main_process():
-                logger.info(f"Stop file detected ({stop_file}), saving checkpoint and exiting...")
+        for _ in range(global_step, total_steps):
+            stop_requested = _SHUTDOWN_REQUESTED or stop_file.exists()
+            if is_dist():
+                stop_signal = torch.tensor(int(stop_requested), device=device)
+                dist.all_reduce(stop_signal, op=dist.ReduceOp.MAX)
+                stop_requested = bool(stop_signal.item())
+            if stop_requested:
                 _SHUTDOWN_REQUESTED = True
+                logger.info("Stop requested; saving checkpoint and exiting.")
                 break
-
-            batch = _batch_to_device(batch, device)
-
-            with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=use_bf16):
-                loss_dict = policy(batch)
-                loss = loss_dict["loss"]
 
             optimizer.zero_grad(set_to_none=True)
-            scaler.scale(loss).backward()
+            accumulated_metrics = {}
+            for micro_step in range(accumulation_steps):
+                batch = _batch_to_device(next(train_loader), device)
+                sync_context = (
+                    policy.no_sync()
+                    if isinstance(policy, DDP) and micro_step < accumulation_steps - 1
+                    else nullcontext()
+                )
+                with sync_context:
+                    with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=use_bf16):
+                        loss_dict = policy(batch)
+                        loss = loss_dict["loss"] / accumulation_steps
+                    scaler.scale(loss).backward()
+                for key, value in loss_dict.items():
+                    if isinstance(value, torch.Tensor) and value.ndim == 0:
+                        accumulated_metrics[key] = accumulated_metrics.get(key, 0) + value.detach() / accumulation_steps
+            loss_dict = accumulated_metrics
 
             if cfg.training.max_grad_norm > 0:
                 scaler.unscale_(optimizer)

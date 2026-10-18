@@ -9,11 +9,8 @@ Stage II datasets support unified action processing via three parameters:
 The unified sample schema (``AffordanceSample``) and reusable building blocks
 live in ``base_dataset`` and are bundled here as the public data contract.
 
-Dataset-specific loaders (PRISM / AGD20K / RefSpatial / VQA / A1 / LIBERO /
-CALVIN) are intentionally NOT bundled: each source's on-disk format depends on
-the release / split you download. Implement them against the ``AffordanceSample``
-contract (see ``base_dataset``) — vibe coding is recommended (see the top-level
-README). ``src/train.py`` imports them lazily and tolerates their absence.
+Dataset adapters follow the ``AffordanceSample`` contract and can be selected
+through ``data.datasets[].factory`` and ``kwargs`` in the training configuration.
 """
 
 from .base_dataset import (

@@ -38,7 +38,7 @@ sys.path.insert(0, str(rex_omni_dir))
 
 # Optional HuggingFace cache override (override REXOMNI_CACHE_DIR to disable
 # the hard-coded path below).
-cache_dir = Path(os.environ.get("REXOMNI_CACHE_DIR", "/mnt/data/RexOmni"))
+cache_dir = Path(os.environ.get("REXOMNI_CACHE_DIR", "pretrained/RexOmni"))
 cache_dir.mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("HF_HOME", str(cache_dir))
 os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(cache_dir))
@@ -54,7 +54,7 @@ sam_predictor = None
 # set to None to require the caller to pass --model_path explicitly.
 REXOMNI_MODEL_PATH = "IDEA-Research/Rex-Omni"
 
-DEFAULT_SAM_CHECKPOINT = "/mnt/data/sam_vit_h_4b8939.pth"
+DEFAULT_SAM_CHECKPOINT = "pretrained/sam_vit_h_4b8939.pth"
 DEFAULT_SAM_MODEL_TYPE = "vit_h"
 
 
