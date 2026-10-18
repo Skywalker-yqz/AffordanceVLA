@@ -286,7 +286,7 @@ SAM3D/                  SAM-3D reference
 - [DexGarmentLab](https://wayrise.github.io/DexGarmentLab/) — Dexterous Garment Manipulation (NeurIPS 2025 Spotlight)
 - [DualAfford](https://hyperplane-lab.github.io/DualAfford/) — Collaborative Dual-Gripper Affordance (ICLR 2023)
 
-## TODO
+<!-- ## TODO
 
 - [x] Paper
 - [x] Project page
@@ -294,7 +294,7 @@ SAM3D/                  SAM-3D reference
 - [x] Affordance-annotation / data-preprocessing pipeline code
 - [ ] **Real-robot code** — release the `frankapy`-based deployment stack.
 - [ ] Data and annotations
-- [ ] Model weights
+- [ ] Model weights -->
 
 ## Citation
 
