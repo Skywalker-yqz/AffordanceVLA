@@ -4,11 +4,11 @@
 
 [![Project Page](https://img.shields.io/badge/Project-Page-8A5CD0)](https://skywalker-yqz.github.io/AffordanceVLA/) [![Paper](https://img.shields.io/badge/Paper-arXiv-b31b1b)](https://arxiv.org/abs/2606.06155) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-[Qize Yu](https://skywalker-yqz.github.io/)<sup>1,†</sup>, [Jiadi You](https://scholar.google.com/citations?hl=en&user=G5RR8WEAAAAJ)<sup>2,†</sup>, [Yuran Wang](https://wayrise.github.io/)<sup>1</sup>, [Jiaqi Liang](https://screatorx.github.io/SCreatorX/)<sup>1</sup>, [Bowen Ping](https://scholar.google.com/citations?hl=zh-CN&user=DjcKZdkAAAAJ)<sup>1</sup>, [Yang Tian](https://nimolty.github.io/homepage/)<sup>1</sup>, [Yue Chen](https://yuechen0614.github.io/)<sup>1</sup>, [Bohan Zhou](https://zhoubohan0.github.io/)<sup>1,3</sup>, [Wenxuan Song](https://songwxuan.github.io/)<sup>2</sup>, [Minghong Cai](https://onevfall.github.io/personal_page/)<sup>3</sup>, [Zeying Gong](https://zeying-gong.github.io/)<sup>2</sup>, [Ruihai Wu](https://warshallrho.github.io/)<sup>1</sup>, [Yinchuan Li](https://yinchuanll.github.io/)<sup>4</sup>, [Junwei Liang](https://junweiliang.me/)<sup>2,*</sup>, [Yingcong Chen](https://www.yingcong.me/)<sup>2,*</sup>
+[Qize Yu](https://skywalker-yqz.github.io/)<sup>1,†</sup>, [Jiadi You](https://scholar.google.com/citations?hl=en&user=G5RR8WEAAAAJ)<sup>2,†</sup>, [Yuran Wang](https://wayrise.github.io/)<sup>1</sup>, [Jiaqi Liang](https://screatorx.github.io/SCreatorX/)<sup>1</sup>, [Bowen Ping](https://scholar.google.com/citations?hl=zh-CN&user=DjcKZdkAAAAJ)<sup>1</sup>, [Yang Tian](https://nimolty.github.io/homepage/)<sup>1</sup>, [Yue Chen](https://yuechen0614.github.io/)<sup>1</sup>, [Bohan Zhou](https://zhoubohan0.github.io/)<sup>1,3</sup>, [Wenxuan Song](https://songwxuan.github.io/)<sup>2</sup>, [Minghong Cai](https://onevfall.github.io/personal_page/)<sup>3</sup>, [Zeying Gong](https://zeying-gong.github.io/)<sup>2</sup>, [Ruihai Wu](https://warshallrho.github.io/)<sup>1</sup>, [Yinchuan Li](https://yinchuanll.github.io/)<sup>4</sup>, [Junwei Liang](https://junweiliang.me/)<sup>2,&#42;</sup>, [Yingcong Chen](https://www.yingcong.me/)<sup>2,&#42;</sup>
 
 <sup>1</sup>Peking University &nbsp;&nbsp; <sup>2</sup>HKUST (GZ) &nbsp;&nbsp; <sup>3</sup>The Chinese University of Hong Kong &nbsp;&nbsp; <sup>4</sup>Knowin AI
 
-<sup>†</sup>Equal contribution &nbsp;&nbsp; <sup>*</sup>Corresponding authors
+<sup>†</sup>Equal contribution &nbsp;&nbsp; <sup>&#42;</sup>Corresponding authors
 
 </div>
 
